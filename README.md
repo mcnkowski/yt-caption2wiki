@@ -35,8 +35,21 @@ ActorCaptionSystem is instantiated similarly to SimpleCaptionSystem, with the ad
 val actSystem = new ActorCaptionSystem(systemName,captionDownloader,captionParser,mediaWiki,nounExtractor)
 ```
 
-Downloading process is started by calling `.execute()` method the same way as described in SimpleCaptionSystem.
-For each video ID a JSON file is written to the specified path.
+To download and save captions and wikipedia articles `.execute()` method is used.
+
+```scala
+val videoIdFile = new File("FileContainingVideoIds.txt")
+val captionLanguage = "en"
+val savePath = "C:\\example\\path\\"
+
+simpleSystem.execute(videoIdFile,captionLanguage,savePath)
+```
+The function accepts a java File object containting video IDs, a string specifying caption language, and path to which the results should be saved.
+Video IDs are extracted from the file via pattern matching. IDs are expected to be 11-character-long alphanumeric strings.
+Caption language needs to be specified using a BCP 47 language tag.
+
+For each video ID one JSON file is created in the specified path, with the video ID in its title.
+Each file contains video ID, raw captions retrieved from the video, plain text captions, and a list of wikiepdia articles containing the article URL, raw version of the article, and a plain text version.
 
 
 A message is sent to an overseer actor every time a set of captions and Wiki articles is saved to a JSON.
