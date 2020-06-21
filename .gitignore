@@ -1,0 +1,6 @@
+target/
+testcontent/
+client_secret.json
+*.class
+*.log
+*.cache
