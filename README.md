@@ -32,6 +32,10 @@ Additionally MediaWiki actor makes use of a Balancing Pool to perform several ca
 
 ActorCaptionSystem is instantiated similarly to SimpleCaptionSystem, with the addition of ActorSystem name
 ```scala
+val captionDownloader = new YouTubeTimedText //YouTubeV3("client_secret.json")
+val captionParser = new TimedTextParser //new SBVParser
+val mediaWiki = new MediaWiki
+val nounExtractor = NounExtractor("en-pos-perceptron.bin")
 val actSystem = new ActorCaptionSystem(systemName,captionDownloader,captionParser,mediaWiki,nounExtractor)
 ```
 
