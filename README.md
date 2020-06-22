@@ -30,7 +30,7 @@ Each action (downloading captions, extracting nouns, MediaWiki calls, writing to
 Additionally MediaWiki actor makes use of a Balancing Pool to perform several calls concurrently.
 
 
-ActorCaptionSystem is instantiated similarly to SimpleCaptionSystem, with the addition of ActorSystem name
+ActorCaptionSystem can be instantiated as follows:
 ```scala
 val captionDownloader = new YouTubeTimedText //YouTubeV3("client_secret.json")
 val captionParser = new TimedTextParser //new SBVParser
@@ -53,7 +53,7 @@ Video IDs are extracted from the file via pattern matching. IDs are expected to 
 Caption language needs to be specified using a BCP 47 language tag.
 
 For each video ID one JSON file is created in the specified path, with the video ID in its title.
-Each file contains video ID, raw captions retrieved from the video, plain text captions, and a list of wikiepdia articles containing the article URL, raw version of the article, and a plain text version.
+Each file contains video ID, raw captions retrieved from the video, plain text captions, and a list of wikipedia articles containing the article URL, raw version of the article, and a plain text version.
 
 
 A message is sent to an overseer actor every time a set of captions and Wiki articles is saved to a JSON.
@@ -69,7 +69,7 @@ The `JsValue` in question is a Play JSON object containing results of a finished
 
 SimpleCaptionSystem performs tasks sequentially in a single thread.
 
-SimpleCaptionSystem can be instantiated as follows:
+SimpleCaptionSystem is instantiated similarly to ActorCaptionSystem:
 ```scala
 val captionDownloader = new YouTubeTimedText //YouTubeV3("client_secret.json")
 val captionParser = new TimedTextParser //new SBVParser
