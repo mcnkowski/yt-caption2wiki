@@ -85,7 +85,7 @@ val videoIdFile = new File("FileContainingVideoIds.txt")
 val captionLanguage = "en"
 val savePath = "C:\\example\\path\\"
 
-aSystem.execute(videoIdFile,captionLanguage,savePath)
+simpleSystem.execute(videoIdFile,captionLanguage,savePath)
 ```
 The function accepts a java File object containting video IDs, a string specifying caption language, and path to which the results should be saved.
 Video IDs are extracted from the file via pattern matching. IDs are expected to be 11-character-long alphanumeric strings.
