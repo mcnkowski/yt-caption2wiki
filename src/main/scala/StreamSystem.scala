@@ -12,9 +12,6 @@ import akka.stream.scaladsl._
 import akka.util.ByteString
 import akka.{NotUsed,Done}
 
-//visualstudiocode
-//intellij
-
 
 class StreamSystem(dl:CaptionDownloader,p:CaptionParser,wiki:MediaWiki,ext:NounExtractor) {
   
@@ -35,7 +32,6 @@ class StreamSystem(dl:CaptionDownloader,p:CaptionParser,wiki:MediaWiki,ext:NounE
 
   def graph(srcFile:String,destFile:String):RunnableGraph[Future[Done]] = {
 
-    //TODO: a custom sink that saves each video in a separate file
     val sink = Sink.foreach[DownloadContent]( result => {
       val content = ByteString(Json.stringify(Save2Json(result)))
       val channel = FileChannel.open(Paths.get(destFile + result.videoId + ".json"),
