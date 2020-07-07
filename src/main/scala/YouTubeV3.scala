@@ -46,8 +46,7 @@ object YouTubeV3 {
   }
 }
 
-class YouTubeV3(initService:YouTube) extends CaptionDownloader {
-  private var _service:YouTube = initService
+class YouTubeV3(_service:YouTube) extends CaptionDownloader {
 
   override val format = "sbv"
 
@@ -80,5 +79,4 @@ class YouTubeV3(initService:YouTube) extends CaptionDownloader {
   }
   
   def service:YouTube = _service
-  def service(service:YouTube) = _service = service
 }

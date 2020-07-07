@@ -34,14 +34,14 @@ class SimpleCaptionSystem(downloader:CaptionDownloader,parser:CaptionParser,wiki
     val words = nounExtractor.extractNounsFrom(captions)
     words.map(word => {
       wiki.fetch(word)
-    }).iterator.toSeq
+    }).collect(Article.dropEmpty)
   }
   
   def execute(file:File,lang:String,path:String):Unit = { 
     val videoIds = extractVideoIds(file)
     val rawCaptions = downloadCaptions(videoIds,lang)
     val plainCaptions = parseCaptions(rawCaptions)
-    val articles = plainCaptions.map(art => searchWiki(art).filter(_.isDefined))
+    val articles = plainCaptions.map(art => searchWiki(art))
     
     0 until videoIds.size foreach { n =>
       if (rawCaptions(n).isDefined) {

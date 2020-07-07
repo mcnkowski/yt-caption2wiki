@@ -8,26 +8,27 @@ import java.net.URLEncoder
 
 /*
 Class used to make MediaWiki API calls to retrieve Wikipedia article contents
-Returns strings in JSON format
-Article extracts are returned either in HTML or plain text format
+Article extracts are returned in HTML and plain text format
 */
 
-case class Article(url:String,html:String,plain:String) {
-  def isDefined:Boolean = {
-    !(html.isEmpty || plain.isEmpty || url.isEmpty)
-  }
-  override def toString:String = {
-    url + "\n\n" + html + "\n\n" + plain
+case class Article(url:String,html:String,plain:String)
+
+object Article {
+  val dropEmpty:PartialFunction[Option[Article],Article] = {
+    case Some(a:Article) if (!(a.html.isEmpty || a.plain.isEmpty || a.url.isEmpty)) => a
   }
 }
 
-//objects used to set MediaWiki's disambiguation handling behavior
+//Used to check what should be done if a disambiguation page was retrieved
+//IGNORE - Treat it as a regular page
+//SKIP - Discard it
+//FIRST - Get the first article listed on the disambiguation page
 sealed trait Disambiguation
 case object IGNORE extends Disambiguation
 case object SKIP extends Disambiguation
 case object FIRST extends Disambiguation
 
-class MediaWiki {
+class MediaWiki(disamb:Disambiguation = IGNORE) {
 
   private val htmlCall = """https://en.wikipedia.org/w/api.php?action=query&format=json&prop=extracts|pageprops|links&exlimit=1&redirects=&titles="""
   private val plainCall = """https://en.wikipedia.org/w/api.php?action=query&format=json&prop=extracts&exlimit=1&redirects=&explaintext=&exsectionformat=plain&titles="""
@@ -36,16 +37,12 @@ class MediaWiki {
   private var connectionTimeOut:Int = 5000
   private var readTimeOut:Int = 5000
   
-  private var disamb:Disambiguation = IGNORE
-
-  
-  def fetch(word:String):Article = {
+  def fetch(word:String):Option[Article] = {
     val title = URLEncoder.encode(word,"UTF-8") //if the title isn't encoded it might fail to make a GET call
     val html = get(htmlCall+title)
     val plain = get(plainCall+title)
 
     //handle disambiguation pages
-    val article =
       disamb match {
         case IGNORE =>
           val extracts = html.getExtracts zip plain.getExtracts
@@ -74,7 +71,6 @@ class MediaWiki {
             extracts.map(ext => Article(wiki+title,ext._1,ext._2))
         }
       }
-    article.getOrElse(Article("","",""))
   }
   
   //make a single MediaWiki API call
@@ -92,11 +88,6 @@ class MediaWiki {
   def readTimeout(time:Int):Unit = readTimeOut = time
   def readTimeout:Int = readTimeOut
   
-  //Used to check what should be done if a disambiguation page was retrieved
-  //IGNORE - Treat is as a regular page
-  //SKIP - Discard it
-  //FIRST - Get the first article listed on the disambiguation page
-  def disambiguation(disamb:Disambiguation):Unit = this.disamb = disamb
   
   private def connect(url:String):HttpURLConnection = {
     val connection = (new URL(url)).openConnection.asInstanceOf[HttpURLConnection]
@@ -106,11 +97,4 @@ class MediaWiki {
     connection
   }
   
-  def copy:MediaWiki = {
-    val copy = new MediaWiki
-    copy.disambiguation(this.disamb)
-    copy.connectTimeout(this.connectTimeout)
-    copy.readTimeout(this.readTimeout)
-    copy
-  }
 }

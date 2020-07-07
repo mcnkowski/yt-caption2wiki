@@ -42,7 +42,7 @@ class NounExtractor(tokenizer:Tokenizer,tagger:POSTagger) {
     tagger.tag(tokens).toIndexedSeq
   }
   
-  def extractNounsFrom(text:String):Set[String] = {
+  def extractNounsFrom(text:String):Seq[String] = {
     val tokens = tokenize(text)
     val tags = tag(tokens)
     
@@ -50,6 +50,6 @@ class NounExtractor(tokenizer:Tokenizer,tagger:POSTagger) {
     val taggedNouns = tags.zip(tokens)
       .filter { case (tag,_) => tag.startsWith("NN") }
     
-    taggedNouns.map(_._2).iterator.toSet
+    taggedNouns.map(_._2).distinct
   }
 }

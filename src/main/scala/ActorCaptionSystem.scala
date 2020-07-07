@@ -16,9 +16,9 @@ import play.api.libs.json.{Json,JsValue}
 
 private case class CaptionRequest(id:String,language:String,path:String)
 private case class WordsRequest(id:String,raw:String,plain:String,path:String)
-private case class WikiRequest(id:String,raw:String,plain:String,words:Set[String],path:String)
+private case class WikiRequest(id:String,raw:String,plain:String,words:Seq[String],path:String)
 private case class WikiWord(word:String)
-private case class WikiResponse(a:Article)
+private case class WikiResponse(a:Option[Article])
 private case class SaveRequest(dl:DownloadContent,path:String)
 private case class Finished(result:JsValue)
 private case class Continue(run:JsValue => Unit)
@@ -105,7 +105,7 @@ class ActorCaptionSystem(systemName:String,dl:CaptionDownloader,p:CaptionParser,
   //MediaWiki call actor
   class WikiActor(wiki:MediaWiki) extends Actor with Stash {
     
-    val cache = ListBuffer.empty[Article]
+    val cache = ListBuffer.empty[Option[Article]]
     var counter:Int = 0
     
     //create a pool of child actors that will perform MediaWiki GET calls
@@ -123,11 +123,11 @@ class ActorCaptionSystem(systemName:String,dl:CaptionDownloader,p:CaptionParser,
         context.become({
           case WikiResponse(article) =>
             
-            if (article.isDefined) cache += article
+            cache += article
             counter = counter + 1
             
             if (counter == words.size) { //send results to writer actor and reset to previous state
-              overseer ! SaveRequest(DownloadContent(id,YTCaptions(raw,plain),cache.toSeq),path)
+              overseer ! SaveRequest(DownloadContent(id,YTCaptions(raw,plain),cache.collect(Article.dropEmpty).toSeq),path)
               counter = 0
               cache.clear()
               unstashAll()
