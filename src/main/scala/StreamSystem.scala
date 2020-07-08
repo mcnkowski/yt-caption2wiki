@@ -30,11 +30,11 @@ class StreamSystem(dl:CaptionDownloader,p:CaptionParser,wiki:MediaWiki,ext:NounE
   val byteStringify:Flow[DownloadContent,ByteString,NotUsed] =
     Flow[DownloadContent].map( x => ByteString(Json.stringify(Save2Json(x))))
 
-  def graph(srcFile:String,destFile:String):RunnableGraph[Future[Done]] = {
+  def graph(srcFile:String,destPath:String):RunnableGraph[Future[Done]] = {
 
     val sink = Sink.foreach[DownloadContent]( result => {
       val content = ByteString(Json.stringify(Save2Json(result)))
-      val channel = FileChannel.open(Paths.get(destFile + result.videoId + ".json"),
+      val channel = FileChannel.open(Paths.get(destPath + result.videoId + ".json"),
         StandardOpenOption.CREATE,StandardOpenOption.WRITE,StandardOpenOption.TRUNCATE_EXISTING)
       
       channel.write(content.asByteBuffer)
@@ -42,26 +42,26 @@ class StreamSystem(dl:CaptionDownloader,p:CaptionParser,wiki:MediaWiki,ext:NounE
     })
     
     RunnableGraph.fromGraph(GraphDSL.create(sink) { implicit b:GraphDSL.Builder[Future[Done]] => sink =>
-    import GraphDSL.Implicits._
+      import GraphDSL.Implicits._
     
-    val source = FileIO.fromPath(Paths.get(srcFile))
-      .via(Framing.delimiter(ByteString(" "),11,true))
-      .map(_.decodeString(encoding))
-      .filter(_.matches("[A-Za-z0-9]{11}"))
+      val source = FileIO.fromPath(Paths.get(srcFile))
+        .via(Framing.delimiter(ByteString(" "),11,true))
+        .map(_.decodeString(encoding))
+        .filter(_.matches("[A-Za-z0-9]{11}"))
     
     
-    val bcastID = b.add(Broadcast[String](2))
-    val bcastCaps = b.add(Broadcast[YTCaptions](2))
-    val zip = b.add(ZipWith[String,YTCaptions,Seq[Article],DownloadContent](DownloadContent(_,_,_)))
+      val bcastID = b.add(Broadcast[String](2))
+      val bcastCaps = b.add(Broadcast[YTCaptions](2))
+      val zip = b.add(ZipWith[String,YTCaptions,Seq[Article],DownloadContent](DownloadContent(_,_,_)))
     
     //TODO: can this be done with FlowWithContext
     source ~> bcastID ~> idToCaps ~> bcastCaps ~> capsToWiki ~> zip.in2
               bcastID ~> zip.in0
                                      bcastCaps ~> zip.in1
     
-    zip.out ~>  sink
+      zip.out ~>  sink
     
-    ClosedShape
+      ClosedShape
     })
   } 
   
