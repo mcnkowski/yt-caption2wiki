@@ -2,7 +2,7 @@ package mcnkowski.wikicaptions
 
 import play.api.libs.json.Json
 import play.api.libs.json.JsValue
-import scala.util.{Try,Using,Success,Failure}
+import scala.util.{Try,Success,Failure}
 
 //TODO: Parser can't parse an empty string. Make a Null Object instead
 

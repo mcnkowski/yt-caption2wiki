@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ScalaCompilerConfiguration">
+    <profile name="sbt 1" modules="youtube-app_5893" />
+    <profile name="sbt 2" modules="youtube-app">
+      <option name="deprecationWarnings" value="true" />
+      <option name="featureWarnings" value="true" />
+      <plugins>
+        <plugin path="C:\Users\Teagin\AppData\Local\Coursier\cache\v1\http\repo.artima.com\releases\com\artima\supersafe\supersafe_2.13.2\1.1.10\supersafe_2.13.2-1.1.10.jar" />
+      </plugins>
+    </profile>
+  </component>
+</project>

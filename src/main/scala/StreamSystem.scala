@@ -18,7 +18,7 @@ class StreamSystem(dl:CaptionDownloader,p:CaptionParser,wiki:MediaWiki,ext:NounE
   val encoding = Charset.forName("UTF-8")
   
   val idToCaps:Flow[String,YTCaptions,NotUsed] = 
-    Flow[String].map(downloadAndParse(_))
+    Flow[String].map(downloadAndParse)
 
   val capsToWords:Flow[YTCaptions,Seq[String],NotUsed] = 
     Flow[YTCaptions].map(caps => ext.extractNounsFrom(caps.plain))
@@ -52,7 +52,7 @@ class StreamSystem(dl:CaptionDownloader,p:CaptionParser,wiki:MediaWiki,ext:NounE
     
       val bcastID = b.add(Broadcast[String](2))
       val bcastCaps = b.add(Broadcast[YTCaptions](2))
-      val zip = b.add(ZipWith[String,YTCaptions,Seq[Article],DownloadContent](DownloadContent(_,_,_)))
+      val zip = b.add(ZipWith[String,YTCaptions,Seq[Article],DownloadContent](DownloadContent))
     
     //TODO: can this be done with FlowWithContext
     source ~> bcastID ~> idToCaps ~> bcastCaps ~> capsToWiki ~> zip.in2

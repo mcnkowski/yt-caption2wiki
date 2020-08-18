@@ -1,11 +1,14 @@
 import mcnkowski.wikicaptions._
+import akka.actor.typed.ActorSystem
+import akka.actor.typed.scaladsl.Behaviors
 import java.io.File
-import akka.actor.ActorSystem
+//import akka.actor.ActorSystem
 
 object Example extends App {
-  implicit val ec: scala.concurrent.ExecutionContext = scala.concurrent.ExecutionContext.global
-  implicit val system = ActorSystem("YTStreamSystem")
-
+  //implicit val ec: scala.concurrent.ExecutionContext = scala.concurrent.ExecutionContext.global
+  //implicit val system = ActorSystem("YTStreamSystem")
+  implicit val system:ActorSystem[Nothing] = ActorSystem(Behaviors.empty,"StreamSystem")
+  implicit val ec:scala.concurrent.ExecutionContext = system.executionContext
   //CaptionDownloader instance
   val youtubes = new YouTubeTimedText
   

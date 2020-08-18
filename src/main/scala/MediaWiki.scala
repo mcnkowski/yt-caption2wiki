@@ -1,9 +1,14 @@
 package mcnkowski.wikicaptions
 
-import scala.collection.mutable.Set
+
 import java.net.{URL,HttpURLConnection}
 import scala.io.Source
 import scala.util.{Try,Using,Success,Failure}
+import scala.concurrent.Future
+import akka.http.scaladsl.Http
+import akka.http.scaladsl.model._
+import akka.http.scaladsl.unmarshalling.{Unmarshal,Unmarshaller}
+import HttpMethods._
 import java.net.URLEncoder 
 
 /*
@@ -28,7 +33,10 @@ case object IGNORE extends Disambiguation
 case object SKIP extends Disambiguation
 case object FIRST extends Disambiguation
 
-class MediaWiki(disamb:Disambiguation = IGNORE) {
+class MediaWiki(disamb:Disambiguation = IGNORE)(implicit system:akka.actor.ActorSystem, executionContext:scala.concurrent.ExecutionContext) {
+  implicit val toWikiText:Unmarshaller[HttpEntity,WikiText] = Unmarshaller.stringUnmarshaller.map {
+    string => WikiText(string)
+  }
 
   private val htmlCall = """https://en.wikipedia.org/w/api.php?action=query&format=json&prop=extracts|pageprops|links&exlimit=1&redirects=&titles="""
   private val plainCall = """https://en.wikipedia.org/w/api.php?action=query&format=json&prop=extracts&exlimit=1&redirects=&explaintext=&exsectionformat=plain&titles="""
@@ -37,42 +45,49 @@ class MediaWiki(disamb:Disambiguation = IGNORE) {
   private var connectionTimeOut:Int = 5000
   private var readTimeOut:Int = 5000
   
-  def fetch(word:String):Option[Article] = {
+  def fetch(word:String):Option[Article] = { //TODO: This needs to be reworked using Akka HTTP
     val title = URLEncoder.encode(word,"UTF-8") //if the title isn't encoded it might fail to make a GET call
-    val html = get(htmlCall+title)
-    val plain = get(plainCall+title)
+    val requests = get(htmlCall+title).zip(get(plainCall+title))
 
-    //handle disambiguation pages
+    requests.map { case (html, plain) =>
+
+      //handle disambiguation pages
       disamb match {
         case IGNORE =>
           val extracts = html.getExtracts zip plain.getExtracts
-          extracts.map(ext => Article(wiki+title,ext._1,ext._2))
-        
+          extracts.map(ext => Article(wiki + title, ext._1, ext._2))
+
         case SKIP =>
-          if(html.isDisamb) {
+          if (html.isDisamb) {
             None
           } else {
             val extracts = html.getExtracts zip plain.getExtracts
-            extracts.map(ext => Article(wiki+title,ext._1,ext._2))
+            extracts.map(ext => Article(wiki + title, ext._1, ext._2))
           }
-        
+
         case FIRST =>
           if (html.isDisamb) {
-            val newtitle = URLEncoder.encode(html.getLinkTitle(0),"UTF-8") //if the article is a disambiguation page, then it should contain at least two links, so the collection shouldn't be empty
-            
+            val newtitle = URLEncoder.encode(html.getLinkTitle(0), "UTF-8") //if the article is a disambiguation page, then it should contain at least two links, so the collection shouldn't be empty
+
             //get new contents based on the title of the first article on the disambiguation page
-            val newhtml = get(htmlCall+newtitle)
-            val newplain = get(plainCall+newtitle)
-            
+            val newhtml = get(htmlCall + newtitle) //TODO
+            val newplain = get(plainCall + newtitle)
+
             val newextracts = newhtml.getExtracts zip newplain.getExtracts
-            newextracts.map(ext => Article(wiki+newtitle,ext._1,ext._2))
+            newextracts.map(ext => Article(wiki + newtitle, ext._1, ext._2))
           } else {
             val extracts = html.getExtracts zip plain.getExtracts
-            extracts.map(ext => Article(wiki+title,ext._1,ext._2))
-        }
+            extracts.map(ext => Article(wiki + title, ext._1, ext._2))
+          }
       }
+    }
   }
-  
+
+  private def get(call:String):Future[WikiText] = {
+    Http().singleRequest(HttpRequest(GET,uri = call)).flatMap(Unmarshal(_).to[WikiText])
+  }
+
+/*
   //make a single MediaWiki API call
   private def get(call:String):WikiText = {
     val content:Try[String] =
@@ -87,14 +102,13 @@ class MediaWiki(disamb:Disambiguation = IGNORE) {
   
   def readTimeout(time:Int):Unit = readTimeOut = time
   def readTimeout:Int = readTimeOut
-  
-  
+
   private def connect(url:String):HttpURLConnection = {
     val connection = (new URL(url)).openConnection.asInstanceOf[HttpURLConnection]
     connection.setConnectTimeout(connectionTimeOut)
     connection.setReadTimeout(readTimeOut)
     connection.setRequestMethod("GET")
     connection
-  }
+  }*/
   
 }
