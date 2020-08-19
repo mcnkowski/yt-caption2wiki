@@ -15,7 +15,7 @@ import akka.{NotUsed,Done}
 
 class StreamSystem(dl:CaptionDownloader,p:CaptionParser,wiki:MediaWiki,ext:NounExtractor) {
   
-  val encoding = Charset.forName("UTF-8")
+  val encoding: Charset = Charset.forName("UTF-8")
   
   val idToCaps:Flow[String,YTCaptions,NotUsed] = 
     Flow[String].map(downloadAndParse)
@@ -24,11 +24,11 @@ class StreamSystem(dl:CaptionDownloader,p:CaptionParser,wiki:MediaWiki,ext:NounE
     Flow[YTCaptions].map(caps => ext.extractNounsFrom(caps.plain))
 
   val capsToWiki:Flow[YTCaptions,Seq[Article],NotUsed] =
-    capsToWords.via(Flow[Seq[String]].mapAsync(4)(seq => Future.sequence(seq.map(word => Future{wiki.fetch(word)}))))
+    capsToWords.via(Flow[Seq[String]].mapAsync(4)(seq => Future.sequence(seq.map(wiki.fetch))))
     .map(_.collect(Article.dropEmpty))
 
   val byteStringify:Flow[DownloadContent,ByteString,NotUsed] =
-    Flow[DownloadContent].map( x => ByteString(Json.stringify(Save2Json(x))))
+    Flow[DownloadContent].map(x => ByteString(Json.stringify(Save2Json(x))))
 
   def graph(srcFile:String,destPath:String):RunnableGraph[Future[Done]] = {
 
@@ -45,7 +45,7 @@ class StreamSystem(dl:CaptionDownloader,p:CaptionParser,wiki:MediaWiki,ext:NounE
       import GraphDSL.Implicits._
     
       val source = FileIO.fromPath(Paths.get(srcFile))
-        .via(Framing.delimiter(ByteString(" "),11,true))
+        .via(Framing.delimiter(ByteString(" "),maximumFrameLength = 11, allowTruncation = true))
         .map(_.decodeString(encoding))
         .filter(_.matches("[A-Za-z0-9]{11}"))
     
