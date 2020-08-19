@@ -8,13 +8,15 @@ import scala.language.reflectiveCalls
 import mcnkowski.wikicaptions.{MediaWiki,Article,IGNORE,SKIP,FIRST}
 import java.net.URLEncoder 
 
+//OUTDATED
+
 class WikiSpec extends AnyFlatSpec with should.Matchers with BeforeAndAfterAll{
   
   def fixture = new {
     val wiki = new MediaWiki
   }
 
-  "MediaWiki" should "return a non-empty Article object" in {
+  /*"MediaWiki" should "return a non-empty Article object" in {
     val wiki = fixture.wiki
     val article = wiki.fetch("pizza")
     assert(article.isDefined)
@@ -72,5 +74,5 @@ class WikiSpec extends AnyFlatSpec with should.Matchers with BeforeAndAfterAll{
     assert(artFirst.isDefined)
     assert(artIgnore.html != artFirst.html && artIgnore.plain != artFirst.plain)
   }
-  
+  */
 }
