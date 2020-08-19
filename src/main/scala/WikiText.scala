@@ -35,8 +35,8 @@ class RealWikiText(json:JsValue) extends WikiText {
 
   override def getExtracts:Option[String] = {  
     val extracts = (json \ "query" \ "pages" \\ "extract")
-    if (!extracts.isEmpty) {
-      Some(extracts(0).as[String])
+    if (extracts.nonEmpty) {
+      Some(extracts.head.as[String])
     } else {
       None
     }
@@ -45,12 +45,12 @@ class RealWikiText(json:JsValue) extends WikiText {
   @throws[IndexOutOfBoundsException]
   override def getLinkTitle(n:Int):String = {
     val jsonseq = (json \ "query" \ "pages" \\ "links")
-    (jsonseq(0) \ n \ "title").get.as[String]
+    (jsonseq.head \ n \ "title").get.as[String]
   }
   
   override def isDisamb:Boolean = {
     val disamb = (json \\ "disambiguation")
-    if (!disamb.isEmpty) {
+    if (disamb.nonEmpty) {
       true
     } else {
       false
@@ -62,7 +62,7 @@ class RealWikiText(json:JsValue) extends WikiText {
 //used when JsValue can't be created out of the supplied string
 object NullWikiText extends WikiText {
   
-  override def getExtracts ={
+  override def getExtracts:Option[String] ={
     None
   }
   
