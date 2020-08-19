@@ -1,9 +1,5 @@
 package mcnkowski.wikicaptions
 
-
-import java.net.{URL,HttpURLConnection}
-import scala.io.Source
-import scala.util.{Try,Using,Success,Failure}
 import scala.concurrent.Future
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model._
@@ -20,7 +16,7 @@ case class Article(url:String,html:String,plain:String)
 
 object Article {
   val dropEmpty:PartialFunction[Option[Article],Article] = {
-    case Some(a:Article) if (!(a.html.isEmpty || a.plain.isEmpty || a.url.isEmpty)) => a
+    case Some(a:Article) if !(a.html.isEmpty || a.plain.isEmpty || a.url.isEmpty) => a
   }
 }
 
@@ -33,7 +29,8 @@ case object IGNORE extends Disambiguation
 case object SKIP extends Disambiguation
 case object FIRST extends Disambiguation
 
-class MediaWiki(disamb:Disambiguation = IGNORE)(implicit system:akka.actor.ActorSystem, executionContext:scala.concurrent.ExecutionContext) {
+class MediaWiki(disamb:Disambiguation = IGNORE)(implicit system:akka.actor.ClassicActorSystemProvider, executionContext:scala.concurrent.ExecutionContext) {
+
   implicit val toWikiText:Unmarshaller[HttpEntity,WikiText] = Unmarshaller.stringUnmarshaller.map {
     string => WikiText(string)
   }
@@ -42,49 +39,43 @@ class MediaWiki(disamb:Disambiguation = IGNORE)(implicit system:akka.actor.Actor
   private val plainCall = """https://en.wikipedia.org/w/api.php?action=query&format=json&prop=extracts&exlimit=1&redirects=&explaintext=&exsectionformat=plain&titles="""
   private val wiki = """https://en.wikipedia.org/wiki/"""
    
-  private var connectionTimeOut:Int = 5000
-  private var readTimeOut:Int = 5000
+  //private var connectionTimeOut:Int = 5000
+  //private var readTimeOut:Int = 5000
   
-  def fetch(word:String):Option[Article] = { //TODO: This needs to be reworked using Akka HTTP
+  def fetch(word:String):Future[Option[Article]] = {
     val title = URLEncoder.encode(word,"UTF-8") //if the title isn't encoded it might fail to make a GET call
     val requests = get(htmlCall+title).zip(get(plainCall+title))
 
-    requests.map { case (html, plain) =>
+    requests.flatMap { case (html, plain) => //had to use flatMap for the repeated GET call in case FIRST
 
       //handle disambiguation pages
       disamb match {
         case IGNORE =>
-          val extracts = html.getExtracts zip plain.getExtracts
-          extracts.map(ext => Article(wiki + title, ext._1, ext._2))
+          Future((html.getExtracts zip plain.getExtracts) map { ext => Article(wiki + title, ext._1, ext._2) })
 
         case SKIP =>
           if (html.isDisamb) {
-            None
+            Future(None)
           } else {
-            val extracts = html.getExtracts zip plain.getExtracts
-            extracts.map(ext => Article(wiki + title, ext._1, ext._2))
+            Future((html.getExtracts zip plain.getExtracts) map { ext => Article(wiki + title, ext._1, ext._2) })
           }
 
         case FIRST =>
           if (html.isDisamb) {
             val newtitle = URLEncoder.encode(html.getLinkTitle(0), "UTF-8") //if the article is a disambiguation page, then it should contain at least two links, so the collection shouldn't be empty
 
-            //get new contents based on the title of the first article on the disambiguation page
-            val newhtml = get(htmlCall + newtitle) //TODO
-            val newplain = get(plainCall + newtitle)
-
-            val newextracts = newhtml.getExtracts zip newplain.getExtracts
-            newextracts.map(ext => Article(wiki + newtitle, ext._1, ext._2))
+            get(htmlCall + newtitle).zipWith(get(plainCall + newtitle)) { case (html, plain) =>
+              (html.getExtracts zip plain.getExtracts).map(ext => Article(wiki + newtitle, ext._1, ext._2))
+            }
           } else {
-            val extracts = html.getExtracts zip plain.getExtracts
-            extracts.map(ext => Article(wiki + title, ext._1, ext._2))
+            Future((html.getExtracts zip plain.getExtracts).map(ext => Article(wiki + title, ext._1, ext._2)))
           }
       }
     }
   }
 
   private def get(call:String):Future[WikiText] = {
-    Http().singleRequest(HttpRequest(GET,uri = call)).flatMap(Unmarshal(_).to[WikiText])
+    Http().singleRequest(HttpRequest(GET,uri = call)).flatMap(response => Unmarshal(response.entity).to[WikiText])
   }
 
 /*
