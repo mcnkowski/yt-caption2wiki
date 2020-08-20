@@ -11,11 +11,11 @@ import java.net.URLEncoder
 //OUTDATED
 
 class WikiSpec extends AnyFlatSpec with should.Matchers with BeforeAndAfterAll{
-  
+  /*
   def fixture = new {
     val wiki = new MediaWiki
   }
-
+  */
   /*"MediaWiki" should "return a non-empty Article object" in {
     val wiki = fixture.wiki
     val article = wiki.fetch("pizza")

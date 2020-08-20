@@ -9,7 +9,7 @@ import mcnkowski.wikicaptions.{YouTubeTimedText,TimedTextParser}
 
 
 class TimedTextSpec extends AnyFlatSpec with should.Matchers{
-  
+  /*
   val videoID = "uTQ5fzSNWIc"
   val notavideoID = "fffffffffff"
   val downloader = new YouTubeTimedText
@@ -31,4 +31,5 @@ class TimedTextSpec extends AnyFlatSpec with should.Matchers{
     val rawcaptions = downloader.download(notavideoID,"en")
     rawcaptions should be theSameInstanceAs None
   }
+   */
 }
