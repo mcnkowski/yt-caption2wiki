@@ -1,10 +1,9 @@
 package mcnkowski.wikicaptions
 
 import play.api.libs.json.Json
-import java.nio.file.{Files,Paths,StandardOpenOption}
+import java.nio.file.{Paths,StandardOpenOption}
 import java.nio.channels.FileChannel
 import java.nio.charset.Charset
-import scala.util.Try
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 import akka.stream._
@@ -18,7 +17,7 @@ class StreamSystem(dl:CaptionDownloader,p:CaptionParser,wiki:MediaWiki,ext:NounE
   val encoding: Charset = Charset.forName("UTF-8")
   
   val idToCaps:Flow[String,YTCaptions,NotUsed] = 
-    Flow[String].map(downloadAndParse)
+    Flow[String].mapAsync(2)(downloadAndParse)
 
   val capsToWords:Flow[YTCaptions,Seq[String],NotUsed] = 
     Flow[YTCaptions].map(caps => ext.extractNounsFrom(caps.plain))
@@ -63,11 +62,12 @@ class StreamSystem(dl:CaptionDownloader,p:CaptionParser,wiki:MediaWiki,ext:NounE
     
       ClosedShape
     })
-  } 
-  
-  private def downloadAndParse(videoId:String):YTCaptions = {
-    val raw = dl.download(videoId,"en").getOrElse("")
-    val plain = p.parse(raw)
-    YTCaptions(raw,plain)
+  }
+
+  private def downloadAndParse(videoId:String):Future[YTCaptions] = {
+    dl.download(videoId,"en") map { raw =>
+      val plain = p.parse(raw)
+      YTCaptions(raw, plain)
+    }
   }
 }
