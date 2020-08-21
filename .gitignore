@@ -2,6 +2,7 @@
 target/
 testcontent/
 client_secret.json
+Example.scala
 *.class
 *.log
 *.cache
