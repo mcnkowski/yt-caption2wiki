@@ -6,6 +6,7 @@ import akka.http.scaladsl.model._
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import HttpMethods._
 
+
 class YouTubeTimedText(implicit system:akka.actor.ClassicActorSystemProvider, executionContext:scala.concurrent.ExecutionContext) extends CaptionDownloader{
 
   private val API = "https://www.youtube.com/api/timedtext"
@@ -15,31 +16,13 @@ class YouTubeTimedText(implicit system:akka.actor.ClassicActorSystemProvider, ex
 
   override def download(video:String,lang:String):Future[String] ={
     Http().singleRequest(HttpRequest(GET,uri = API + "?lang=" + lang +"&v=" + video))
-      .flatMap(response => Unmarshal(response.entity).to[String])
+      .flatMap { response =>
+        if (response._1.intValue == 200) {
+          Unmarshal(response.entity).to[String]
+        } else {
+          throw new Exception(s"Video captions could not be retrieved.\nVideo ID: $video\nCode: ${response._1.intValue}")
+        }
+      }
   }
 
-  /*override def download(video:String,lang:String):Option[String] = {
-    val URL = API + "?lang=" + lang + "&v=" + video
-    val content:Try[String] =
-      Using(connect(URL).getInputStream()) { in =>
-        Source.fromInputStream(in).mkString
-      }
-    content.toOption
-  }*/
-  
-  /*@throws[java.io.IOException]
-  @throws[java.net.SocketTimeoutException]
-  private def connect(url:String):HttpURLConnection = {
-    val connection = (new URL(url)).openConnection.asInstanceOf[HttpURLConnection]
-    connection.setConnectTimeout(connectionTimeOut)
-    connection.setReadTimeout(readTimeOut)
-    connection.setRequestMethod("GET")
-    connection
-  }
-  
-  def connectionTimeout(time:Int):Unit = connectionTimeOut = time
-  def connectionTimeout:Int = connectionTimeOut
-  
-  def readTimeout(time:Int):Unit = readTimeOut = time
-  def readTimeout:Int = readTimeOut*/
 }
