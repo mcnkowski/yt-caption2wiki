@@ -24,7 +24,7 @@ class StreamSystem(dl:CaptionDownloader,p:CaptionParser,wiki:MediaWiki,ext:NounE
 
   val capsToWiki:Flow[YTCaptions,Seq[Article],NotUsed] =
     capsToWords.via(Flow[Seq[String]].mapAsync(4)(seq => Future.sequence(seq.map(wiki.fetch))))
-    .map(_.collect(Article.dropEmpty))
+    .map(_.collect(Article.nonEmpty))
 
   val byteStringify:Flow[DownloadContent,ByteString,NotUsed] =
     Flow[DownloadContent].map(x => ByteString(Json.stringify(Save2Json(x))))
