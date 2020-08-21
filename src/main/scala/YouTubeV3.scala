@@ -24,25 +24,25 @@ object YouTubeV3 {
 
   //get a YouTube API credential based on client secret
   @throws[java.io.IOException]
-  private def authorize(httpTr:NetHttpTransport,secret:String):Credential = {
+  private def authorize(user:String,httpTr:NetHttpTransport,secret:String):Credential = {
     val in = Source.fromFile(secret)
     val clientsecrets:GoogleClientSecrets = GoogleClientSecrets
       .load(factory,in.reader())
     val flow:GoogleAuthorizationCodeFlow = new GoogleAuthorizationCodeFlow
       .Builder(httpTr,factory,clientsecrets,scopes).build()
     in.close()
-    new AuthorizationCodeInstalledApp(flow,new LocalServerReceiver()).authorize("test user")
+    new AuthorizationCodeInstalledApp(flow,new LocalServerReceiver()).authorize(user)
   }
   
   @throws[java.io.IOException]
-  def getService(secret:String):YouTube = {
-    val credential = authorize(httptransport,secret)
-    new YouTube.Builder(httptransport,factory,credential).setApplicationName("test").build()
+  def getService(userName:String,appName:String,secret:String):YouTube = {
+    val credential = authorize(userName,httptransport,secret)
+    new YouTube.Builder(httptransport,factory,credential).setApplicationName(appName).build()
   }
 
 
-  def apply(secret:String)(implicit ec: scala.concurrent.ExecutionContext):YouTubeV3 = {
-    new YouTubeV3(getService(secret))
+  def apply(userName:String,appName:String,secret:String)(implicit ec: scala.concurrent.ExecutionContext):YouTubeV3 = {
+    new YouTubeV3(getService(userName,appName,secret))
   }
 }
 
