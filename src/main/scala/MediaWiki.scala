@@ -15,8 +15,8 @@ Article extracts are returned in HTML and plain text format
 case class Article(url:String,html:String,plain:String)
 
 object Article {
-  val dropEmpty:PartialFunction[Option[Article],Article] = {
-    case Some(a:Article) if !(a.html.isEmpty || a.plain.isEmpty || a.url.isEmpty) => a
+  val nonEmpty:PartialFunction[Option[Article],Article] = {
+    case Some(a:Article) if a.html.nonEmpty && a.plain.nonEmpty && a.url.nonEmpty => a
   }
 }
 
@@ -62,10 +62,12 @@ class MediaWiki(disamb:Disambiguation = IGNORE)(implicit system:akka.actor.Class
 
         case FIRST =>
           if (html.isDisamb) {
-            val newtitle = URLEncoder.encode(html.getLinkTitle(0), "UTF-8") //if the article is a disambiguation page, then it should contain at least two links, so the collection shouldn't be empty
+            html.getLinkTitle(0).fold(Future[Option[Article]](None)){ title =>
+              val newtitle = URLEncoder.encode(title, "UTF-8")
 
-            get(htmlCall + newtitle).zipWith(get(plainCall + newtitle)) { case (html, plain) =>
-              (html.getExtracts zip plain.getExtracts).map(ext => Article(wiki + newtitle, ext._1, ext._2))
+              get(htmlCall + newtitle).zipWith(get(plainCall + newtitle)) { case (html, plain) =>
+                (html.getExtracts zip plain.getExtracts).map(ext => Article(wiki + newtitle, ext._1, ext._2))
+              }
             }
           } else {
             Future((html.getExtracts zip plain.getExtracts).map(ext => Article(wiki + title, ext._1, ext._2)))

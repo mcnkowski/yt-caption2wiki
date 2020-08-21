@@ -24,7 +24,7 @@ trait WikiText{
   
   def getExtracts:Option[String]
   
-  def getLinkTitle(n:Int):String
+  def getLinkTitle(n:Int):Option[String]
   
   def isDisamb:Boolean 
 }
@@ -41,11 +41,12 @@ class RealWikiText(json:JsValue) extends WikiText {
       None
     }
   }
-  
-  @throws[IndexOutOfBoundsException]
-  override def getLinkTitle(n:Int):String = {
-    val jsonseq = (json \ "query" \ "pages" \\ "links")
-    (jsonseq.head \ n \ "title").get.as[String]
+
+  override def getLinkTitle(n:Int):Option[String] = {
+    Try {
+      val jsonseq = (json \ "query" \ "pages" \\ "links")
+      (jsonseq.head \ n \ "title").get.as[String]
+    }.toOption
   }
   
   override def isDisamb:Boolean = {
@@ -66,8 +67,8 @@ object NullWikiText extends WikiText {
     None
   }
   
-  override def getLinkTitle(n:Int):String = {
-    ""
+  override def getLinkTitle(n:Int):Option[String] = {
+    None
   }
   
   override def isDisamb:Boolean = false
