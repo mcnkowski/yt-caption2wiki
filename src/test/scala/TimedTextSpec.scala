@@ -1,35 +1,46 @@
 package test
 
+import akka.actor.typed.ActorSystem
+import akka.actor.typed.scaladsl.Behaviors
 import org.scalatest._
-import scala.io.Source
 import matchers._
 import flatspec._
+
 import scala.language.reflectiveCalls
-import mcnkowski.wikicaptions.{YouTubeTimedText,TimedTextParser}
+import mcnkowski.wikicaptions.{TimedTextParser, YouTubeTimedText}
 
 
-class TimedTextSpec extends AnyFlatSpec with should.Matchers{
-  /*
+import scala.concurrent.ExecutionContext
+
+
+class TimedTextSpec extends AnyFlatSpec with should.Matchers with BeforeAndAfterAll {
+  implicit val system:ActorSystem[Nothing] = ActorSystem(Behaviors.empty, "TestSystem")
+  implicit val ec:ExecutionContext = ExecutionContext.global
+
+  override def afterAll(): Unit = {
+    system.terminate()
+  }
+
   val videoID = "uTQ5fzSNWIc"
   val notavideoID = "fffffffffff"
   val downloader = new YouTubeTimedText
   val xmlparser = new TimedTextParser
   
-  "YT TimedText" should "return a Some(string) containing captions in XML format" in {
+  "YT TimedText" should "return a Future containing captions in XML format" in {
     val rawcaptions = downloader.download(videoID,"en")
-    assert(!rawcaptions.get.isEmpty)
-    val plaincaptions = xmlparser.parse(rawcaptions.get)
-    assert(!plaincaptions.isEmpty)
+    rawcaptions.map(caps => assert(caps.nonEmpty))
+    val plaincaptions = rawcaptions.map(xmlparser.parse)
+    plaincaptions.map(caps => assert(caps.nonEmpty))
   }
   
   it should "return an empty string for a video that doesn't have captions in selected language" in {
     val rawcaptions = downloader.download(videoID,"pl")
-    assert(rawcaptions.get.isEmpty)
+    rawcaptions.map(caps => assert(caps.isEmpty))
   }
   
-  it should "return a None if it fails to make a connection" in {
+  it should "fail the Future if it can't retrieve captions" in {
     val rawcaptions = downloader.download(notavideoID,"en")
-    rawcaptions should be theSameInstanceAs None
+    rawcaptions.map(caps => assertThrows(new Exception))
   }
-   */
+
 }

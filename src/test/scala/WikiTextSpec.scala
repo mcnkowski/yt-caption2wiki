@@ -47,9 +47,7 @@ class WikiTextSpec extends AnyFlatSpec with should.Matchers {
     val text = WikiText(jsonwrong)
     assert(text.getExtracts.isEmpty)
     assert(!text.isDisamb)
-    assertThrows[IndexOutOfBoundsException] {
-      text.getLinkTitle(0)
-    }
+    text.getLinkTitle(0) should be theSameInstanceAs None
   }
   
   it should "recognise a disambiguation page" in {
