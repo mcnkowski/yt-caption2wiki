@@ -16,12 +16,11 @@ class YouTubeTimedText(implicit system:akka.actor.ClassicActorSystemProvider, ex
 
   override def download(video:String,lang:String):Future[String] ={
     Http().singleRequest(HttpRequest(GET,uri = API + "?lang=" + lang +"&v=" + video))
-      .flatMap { response =>
-        if (response._1.intValue == 200) {
-          Unmarshal(response.entity).to[String]
-        } else {
-          throw new Exception(s"Video captions could not be retrieved.\nVideo ID: $video\nCode: ${response._1.intValue}")
-        }
+      .flatMap {
+        case HttpResponse(StatusCodes.OK,_,entity,_) =>
+          Unmarshal(entity).to[String]
+        case HttpResponse(code,_,_,_) =>
+          throw new Exception(s"Video captions could not be retrieved.\nVideo ID: $video\nCode: $code")
       }
   }
 
