@@ -55,7 +55,7 @@ class MediaWiki(disamb:Disambiguation = IGNORE)(implicit system:akka.actor.Class
 
         case SKIP =>
           if (html.isDisamb) {
-            Future(None)
+            Future.successful(None)
           } else {
             Future((html.getExtracts zip plain.getExtracts) map { ext => Article(wiki + title, ext._1, ext._2) })
           }
