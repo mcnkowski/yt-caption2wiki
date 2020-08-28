@@ -1,11 +1,9 @@
 package mcnkowski.wikicaptions
 
 import scala.concurrent.Future
-import akka.http.scaladsl.Http
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.unmarshalling.{Unmarshal,Unmarshaller}
-import HttpMethods._
-import java.net.URLEncoder 
+import java.net.URLEncoder
 
 /*
 Class used to make MediaWiki API calls to retrieve Wikipedia article contents
@@ -77,31 +75,6 @@ class MediaWiki(disamb:Disambiguation = IGNORE)(implicit system:akka.actor.Class
   }
 
   private def get(call:String):Future[WikiText] = {
-    Http().singleRequest(HttpRequest(GET,uri = call)).flatMap(response => Unmarshal(response.entity).to[WikiText])
+    Get(call).flatMap(response => Unmarshal(response.entity).to[WikiText])
   }
-
-/*
-  //make a single MediaWiki API call
-  private def get(call:String):WikiText = {
-    val content:Try[String] =
-      Using(connect(call).getInputStream()) { in =>
-        Source.fromInputStream(in).mkString
-      }
-    WikiText(content.toOption)
-  }
-  
-  def connectTimeout(time:Int):Unit = connectionTimeOut = time
-  def connectTimeout:Int = connectionTimeOut
-  
-  def readTimeout(time:Int):Unit = readTimeOut = time
-  def readTimeout:Int = readTimeOut
-
-  private def connect(url:String):HttpURLConnection = {
-    val connection = (new URL(url)).openConnection.asInstanceOf[HttpURLConnection]
-    connection.setConnectTimeout(connectionTimeOut)
-    connection.setReadTimeout(readTimeOut)
-    connection.setRequestMethod("GET")
-    connection
-  }*/
-  
 }
