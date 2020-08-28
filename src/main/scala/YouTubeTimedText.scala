@@ -13,9 +13,8 @@ class YouTubeTimedText(implicit system:akka.actor.ClassicActorSystemProvider, ex
 
   override val format = "xml"
 
-
   override def download(video:String,lang:String):Future[String] ={
-    Http().singleRequest(HttpRequest(GET,uri = API + "?lang=" + lang +"&v=" + video))
+    Get(API + "?lang=" + lang +"&v=" + video)
       .flatMap {
         case HttpResponse(StatusCodes.OK,_,entity,_) =>
           Unmarshal(entity).to[String]
@@ -23,5 +22,4 @@ class YouTubeTimedText(implicit system:akka.actor.ClassicActorSystemProvider, ex
           throw new Exception(s"Video captions could not be retrieved.\nVideo ID: $video\nCode: $code")
       }
   }
-
 }
