@@ -1,4 +1,4 @@
-An app that downloads youtube captions based on a video ID, and compiles a list of Wikipedia articles based their content.
+An app that downloads youtube captions based on a video ID, and compiles a list of Wikipedia articles based on their content.
 
 Can use YoutubeV3 API or YoutubeTimedText API for caption retrieval.
 In case of YoutubeV3 a Google client secret credential is required.
