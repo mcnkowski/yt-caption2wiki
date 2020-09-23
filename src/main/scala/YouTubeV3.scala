@@ -72,6 +72,7 @@ class YouTubeV3(_service:YouTube)(implicit ec: scala.concurrent.ExecutionContext
 
         case None => 
           //didn't find captions
+          //TODO: reconsider failing the Future; maybe just return an empty string
           throw new Exception("No captions found.")
       }
   }

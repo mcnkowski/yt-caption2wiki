@@ -52,8 +52,7 @@ class StreamSystem(dl:CaptionDownloader,p:CaptionParser,wiki:MediaWiki,ext:NounE
       val bcastID = b.add(Broadcast[String](2))
       val bcastCaps = b.add(Broadcast[YTCaptions](2))
       val zip = b.add(ZipWith[String,YTCaptions,Seq[Article],DownloadContent](DownloadContent))
-    
-    //TODO: can this be done with FlowWithContext
+
     source ~> bcastID ~> idToCaps ~> bcastCaps ~> capsToWiki ~> zip.in2
               bcastID ~> zip.in0
                                      bcastCaps ~> zip.in1
